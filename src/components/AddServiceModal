@@ -1,0 +1,254 @@
+import React, { useState, useEffect } from 'react';
+import { ServiceCatalogItem, Application, BillingType, DependencyCriticality, ServiceStatus } from '../types';
+import { Server, X, Plus, Check } from 'lucide-react';
+
+interface AddServiceModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (serviceData: Partial<ServiceCatalogItem>) => void;
+  applications: Application[];
+  editingService?: ServiceCatalogItem | null;
+}
+
+export const AddServiceModal: React.FC<AddServiceModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  applications,
+  editingService,
+}) => {
+  if (!isOpen) return null;
+
+  const [providerName, setProviderName] = useState('');
+  const [serviceName, setServiceName] = useState('');
+  const [billingCategory, setBillingCategory] = useState('Cloud Compute');
+  const [linkedAppId, setLinkedAppId] = useState<string>('');
+  const [billingModel, setBillingModel] = useState<BillingType>('Pay-As-You-Go');
+  const [renewalDate, setRenewalDate] = useState('');
+  const [paymentMethodLast4, setPaymentMethodLast4] = useState('4821');
+  const [paymentCardExpiry, setPaymentCardExpiry] = useState('2027-12');
+  const [remainingBalance, setRemainingBalance] = useState(500);
+  const [dailyBurnRate, setDailyBurnRate] = useState(15.0);
+  const [status, setStatus] = useState<ServiceStatus>('Healthy');
+  const [dependencyCriticality, setDependencyCriticality] = useState<DependencyCriticality>('Medium');
+
+  useEffect(() => {
+    if (editingService) {
+      setProviderName(editingService.providerName);
+      setServiceName(editingService.serviceName);
+      setBillingCategory(editingService.billingCategory);
+      setLinkedAppId(editingService.linkedAppId || '');
+      setBillingModel(editingService.billingModel);
+      setRenewalDate(editingService.renewalDate || '');
+      setPaymentMethodLast4(editingService.paymentMethodLast4);
+      setPaymentCardExpiry(editingService.paymentCardExpiry);
+      setRemainingBalance(editingService.remainingBalance);
+      setDailyBurnRate(editingService.dailyBurnRate);
+      setStatus(editingService.status);
+      setDependencyCriticality(editingService.dependencyCriticality);
+    } else {
+      setProviderName('');
+      setServiceName('');
+      setBillingCategory('Cloud Compute');
+      setLinkedAppId('');
+      setBillingModel('Pay-As-You-Go');
+      setRenewalDate('');
+      setPaymentMethodLast4('4821');
+      setPaymentCardExpiry('2027-12');
+      setRemainingBalance(500);
+      setDailyBurnRate(15.0);
+      setStatus('Healthy');
+      setDependencyCriticality('Medium');
+    }
+  }, [editingService, isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      ...(editingService ? { id: editingService.id } : {}),
+      providerName,
+      serviceName,
+      billingCategory,
+      linkedAppId: linkedAppId || null,
+      billingModel,
+      renewalDate: renewalDate || null,
+      paymentMethodLast4,
+      paymentCardExpiry,
+      remainingBalance: Number(remainingBalance),
+      dailyBurnRate: Number(dailyBurnRate),
+      status,
+      dependencyCriticality,
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl space-y-0">
+        <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Server className="h-5 w-5 text-cyan-400" />
+            <h3 className="text-base font-bold text-slate-100">
+              {editingService ? 'Edit Infrastructure Service' : 'Add New Multi-Cloud Infrastructure Service'}
+            </h3>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Provider Name</label>
+              <input
+                type="text"
+                value={providerName}
+                onChange={(e) => setProviderName(e.target.value)}
+                placeholder="e.g. Google Cloud Platform, Twilio, OpenAI"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Service Account Name</label>
+              <input
+                type="text"
+                value={serviceName}
+                onChange={(e) => setServiceName(e.target.value)}
+                placeholder="e.g. Gemini 3.6 Flash & Live API"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Billing Category</label>
+              <input
+                type="text"
+                value={billingCategory}
+                onChange={(e) => setBillingCategory(e.target.value)}
+                placeholder="e.g. AI Model API, Object Storage, DNS"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Linked Application</label>
+              <select
+                value={linkedAppId}
+                onChange={(e) => setLinkedAppId(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200"
+              >
+                <option value="">-- No App Link --</option>
+                {applications.map(app => (
+                  <option key={app.id} value={app.id}>{app.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Billing Model</label>
+              <select
+                value={billingModel}
+                onChange={(e) => setBillingModel(e.target.value as BillingType)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200"
+              >
+                <option value="Pay-As-You-Go">Pay-As-You-Go</option>
+                <option value="Monthly Recurring">Monthly Recurring</option>
+                <option value="Annual Pre-paid">Annual Pre-paid</option>
+                <option value="Free Tier">Free Tier</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Dependency Criticality</label>
+              <select
+                value={dependencyCriticality}
+                onChange={(e) => setDependencyCriticality(e.target.value as DependencyCriticality)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200"
+              >
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Remaining Balance ($)</label>
+              <input
+                type="number"
+                value={remainingBalance}
+                onChange={(e) => setRemainingBalance(Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Daily Burn Rate ($/day)</label>
+              <input
+                type="number"
+                value={dailyBurnRate}
+                onChange={(e) => setDailyBurnRate(Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Payment Card Last 4 & Expiry</label>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  maxLength={4}
+                  value={paymentMethodLast4}
+                  onChange={(e) => setPaymentMethodLast4(e.target.value)}
+                  placeholder="4821"
+                  className="w-1/2 bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 font-mono"
+                />
+                <input
+                  type="text"
+                  value={paymentCardExpiry}
+                  onChange={(e) => setPaymentCardExpiry(e.target.value)}
+                  placeholder="YYYY-MM"
+                  className="w-1/2 bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 font-mono"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as ServiceStatus)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200"
+              >
+                <option value="Healthy">Healthy</option>
+                <option value="Warning">Warning</option>
+                <option value="Critical">Critical</option>
+                <option value="Expired">Expired</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg text-xs"
+            >
+              Save Service
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
